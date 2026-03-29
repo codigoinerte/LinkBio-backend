@@ -1,61 +1,177 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# aboutlink.me — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+REST API para la plataforma **aboutlink.me**, un servicio de bio-links personalizable donde los usuarios pueden crear su perfil público con links, proyectos, temas visuales y wallpapers.
 
-## About Laravel
+Construido con **Laravel 12** y autenticación JWT.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Capa | Tecnología |
+|---|---|
+| Framework | Laravel 12 / PHP 8.2+ |
+| Base de datos | MySQL |
+| Autenticación | JWT (`tymon/jwt-auth`) |
+| Procesamiento de imágenes | Intervention Image 3 |
+| Login social | Google API Client, Facebook Graph SDK |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Requisitos
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- PHP >= 8.2
+- Composer
+- MySQL
+- Extensiones PHP: `gd` o `imagick`, `pdo_mysql`, `mbstring`, `openssl`
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Instalación
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+git clone <repo-url> aboutlink-me-backend
+cd aboutlink-me-backend
 
-### Premium Partners
+composer install
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+cp .env.example .env
+php artisan key:generate
+php artisan jwt:secret
+```
 
-## Contributing
+Configurar el archivo `.env`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```env
+APP_NAME=aboutlink.me
+APP_URL=http://localhost:8000
 
-## Code of Conduct
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=aboutlink_me_backend
+DB_USERNAME=root
+DB_PASSWORD=
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
-## Security Vulnerabilities
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Ejecutar migraciones y seeders:
 
-## License
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## Reset de base de datos
+
+La base de datos se reinicia completamente con:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Esto recrea todas las tablas y siembra los datos iniciales:
+- **ThemeSeeder** — 12 temas visuales (air, lake, bloom, etc.)
+- **CategorySeeder** — 12 categorías de links (GitHub, LinkedIn, Instagram, etc.)
+- **JohnDoeSeeder** — Usuario demo `john.doe@example.com` con proyectos, links y diseño de perfil configurado
+
+### Usuario demo
+
+| Campo | Valor |
+|---|---|
+| Email | `john.doe@example.com` |
+| Password | `123456` |
+| Nickname | `johndoe` |
+| Tema | Lake |
+| Wallpaper | `original_1774761315.webp` |
+
+---
+
+## Endpoints principales
+
+Base URL: `/api`
+
+### Autenticación (`/api/auth`)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/auth/login` | Login con email y password |
+| POST | `/auth/register` | Registro de nuevo usuario |
+| POST | `/auth/logout` | Cerrar sesión |
+| POST | `/auth/refresh` | Refrescar token JWT |
+| GET | `/auth/me` | Datos del usuario autenticado |
+| PUT | `/auth/update-profile` | Actualizar perfil completo |
+| POST | `/auth/validate-nickname` | Verificar disponibilidad de nickname |
+| DELETE | `/auth/delete-account` | Eliminar cuenta |
+| POST | `/auth/google` | Login con Google |
+| POST | `/auth/facebook` | Login con Facebook |
+| POST | `/auth/validate-token` | Validar token JWT |
+
+### Público
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/landing` | Obtener perfil público por nickname |
+
+### Protegidos (requieren Bearer token)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET/POST/PUT/DELETE | `/links` | CRUD de links |
+| PUT | `/link/updateState/{id}` | Activar/desactivar link |
+| PUT | `/updateOrderslinks` | Reordenar links |
+| GET/POST/PUT/DELETE | `/projects` | CRUD de proyectos |
+| POST | `/projects/update/{id}` | Actualizar proyecto (con imágenes) |
+| PUT | `/project/updateState/{id}` | Activar/desactivar proyecto |
+| PUT | `/updateOrdersprojects` | Reordenar proyectos |
+| GET/POST | `/user-profile-design` | Obtener/guardar diseño de perfil |
+| DELETE | `/profile/wallpaper` | Eliminar wallpaper |
+| POST | `/upload/profile` | Subir foto de perfil |
+| DELETE | `/profile/photo` | Eliminar foto de perfil |
+| DELETE | `/galery/image/{id}` | Eliminar imagen de galería |
+| GET | `/themes` | Listar temas disponibles |
+| GET | `/categories` | Listar categorías de links |
+
+---
+
+## Almacenamiento de imágenes
+
+Las imágenes se guardan en `storage/app/public/` con acceso público vía `storage/`:
+
+```
+storage/app/public/
+├── profile/          # Fotos de perfil
+│   ├── {timestamp}.webp
+│   ├── thumb_{timestamp}.webp
+│   └── medium_{timestamp}.webp
+├── wallpaper/        # Wallpapers de perfil
+│   └── original_{timestamp}.webp
+└── galery/           # Imágenes de proyectos
+    ├── {timestamp}{random}.webp
+    ├── thumb_{timestamp}{random}.webp
+    └── medium_{timestamp}{random}.webp
+```
+
+---
+
+## Diseño de perfil
+
+Cada usuario puede personalizar su perfil con:
+
+- **Tema** — 12 opciones (3 gratuitas, 9 premium): `air`, `blocks`, `lake`, `mineral`, `rise`, `bloom`, `breeze`, `astrid`, `groove`, `agate`, `twilight`, `grid`
+- **Wallpaper tipo imagen** — archivo subido por el usuario
+- **Wallpaper tipo color** — color sólido predefinido o personalizado (hex)
+- **Wallpaper tipo patrón** — patrones predefinidos
+
+---
+
+## Licencia
+
+Proyecto privado — todos los derechos reservados.
