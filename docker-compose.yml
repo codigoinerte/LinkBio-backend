@@ -40,7 +40,7 @@ services:
       MYSQL_USER: ${DB_USERNAME:-aboutlink}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
