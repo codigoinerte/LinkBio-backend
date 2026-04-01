@@ -1,0 +1,48 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /var/www/aboutme-backend
+
+            git config --global --add safe.directory /var/www/aboutme-backend
+            git pull origin main
+
+            # Reconstruir imagen si cambiaron dependencias o el Dockerfile
+            docker compose build app
+
+            # Reiniciar solo el contenedor app (nginx y db no se tocan)
+            docker compose up -d --no-deps app
+
+            # Esperar a que PHP-FPM esté listo
+            sleep 3
+
+            # Dependencias de producción
+            docker compose exec -T app composer install --no-dev --optimize-autoloader
+
+            # Migraciones (--force para omitir confirmación en producción)
+            docker compose exec -T app php artisan migrate --force
+
+            # Limpiar y regenerar caches
+            docker compose exec -T app php artisan config:cache
+            docker compose exec -T app php artisan route:cache
+            docker compose exec -T app php artisan view:cache
+
+            # Permisos de storage
+            docker compose exec -T app chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
