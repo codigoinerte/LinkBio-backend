@@ -8,11 +8,14 @@ use App\Models\User;
 use App\Models\UserProfileDesign;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class JohnDoeSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->copyAssets();
+
         $user = User::create([
             'name'        => 'John Doe',
             'nickname'    => 'johndoe',
@@ -82,7 +85,6 @@ class JohnDoeSeeder extends Seeder
             'visits'      => 60,
         ]);
 
-        // User design
         UserProfileDesign::create([
             'user_id'               => $user->id,
             'theme_id'              => 'lake',
@@ -92,5 +94,28 @@ class JohnDoeSeeder extends Seeder
             'wallpaper_color_custom' => '',
             'wallpaper_pattern_type' => '',
         ]);
+    }
+
+    private function copyAssets(): void
+    {
+        $assets = database_path('seeders/assets');
+
+        $directories = ['profile', 'wallpaper', 'galery'];
+        foreach ($directories as $dir) {
+            Storage::disk('public')->makeDirectory($dir);
+        }
+
+        foreach (['profile', 'wallpaper'] as $dir) {
+            $source = $assets . '/' . $dir;
+            if (!is_dir($source)) continue;
+
+            foreach (glob($source . '/*') as $file) {
+                $filename = basename($file);
+                $destination = $dir . '/' . $filename;
+                if (!Storage::disk('public')->exists($destination)) {
+                    Storage::disk('public')->put($destination, file_get_contents($file));
+                }
+            }
+        }
     }
 }
